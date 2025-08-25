@@ -8,6 +8,7 @@ import (
 	"log"
 	"os"
 	"strings"
+	"time"
 )
 
 type problem struct {
@@ -30,6 +31,7 @@ func parseLines(lines [][]string) []problem {
 
 func main() {
 	csvFileName := flag.String("csv", "problems.csv", "a csv file in the format 'question,answer'")
+	timeLimit := flag.Int("limit", 30, "the time limit for quiz in seconds")
 	flag.Parse()
 
 	file, err := os.Open(*csvFileName)
@@ -53,14 +55,22 @@ func main() {
 
 	problems := parseLines(lines)
 
+	timer := time.NewTimer(time.Duration(*timeLimit) * time.Second)
+
 	for i, problem := range problems {
-		fmt.Printf("Problem #%d: %s = ", i+1, problem.q)
+		select {
+		case <-timer.C:
+			fmt.Printf("\nYou got %d out of %d correct.\n", correct, len(problems))
+			return
+		default:
+			fmt.Printf("Problem #%d: %s = ", i+1, problem.q)
 
-		scanner.Scan()
-		userAnswer := strings.TrimSpace(scanner.Text())
+			scanner.Scan()
+			userAnswer := strings.TrimSpace(scanner.Text())
 
-		if userAnswer == problem.a {
-			correct++
+			if userAnswer == problem.a {
+				correct++
+			}
 		}
 	}
 
