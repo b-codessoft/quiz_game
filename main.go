@@ -6,6 +6,7 @@ import (
 	"flag"
 	"fmt"
 	"log"
+	"math/rand"
 	"os"
 	"strings"
 	"time"
@@ -30,8 +31,10 @@ func parseLines(lines [][]string) []problem {
 }
 
 func main() {
+	rand.Seed(time.Now().UnixNano())
 	csvFileName := flag.String("csv", "problems.csv", "a csv file in the format 'question,answer'")
 	timeLimit := flag.Int("limit", 30, "the time limit for quiz in seconds")
+	shuffleQuiz := flag.Bool("shuffle", false, "shuffle the order of the quiz")
 	flag.Parse()
 
 	file, err := os.Open(*csvFileName)
@@ -54,10 +57,17 @@ func main() {
 	correct := 0
 
 	problems := parseLines(lines)
+	dupProblems := parseLines(lines)
 
 	timer := time.NewTimer(time.Duration(*timeLimit) * time.Second)
 
 	for i, problem := range problems {
+		if *shuffleQuiz {
+			index := rand.Intn(len(dupProblems))
+			problem = dupProblems[index]
+			dupProblems = append(dupProblems[:index], dupProblems[index+1:]...)
+		}
+
 		fmt.Printf("Problem #%d: %s = ", i+1, problem.q)
 		answerCh := make(chan string)
 		go func() {
