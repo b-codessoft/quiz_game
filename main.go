@@ -58,16 +58,18 @@ func main() {
 	timer := time.NewTimer(time.Duration(*timeLimit) * time.Second)
 
 	for i, problem := range problems {
+		fmt.Printf("Problem #%d: %s = ", i+1, problem.q)
+		answerCh := make(chan string)
+		go func() {
+			scanner.Scan()
+			answerCh <- strings.TrimSpace(scanner.Text())
+		}()
+
 		select {
 		case <-timer.C:
 			fmt.Printf("\nYou got %d out of %d correct.\n", correct, len(problems))
 			return
-		default:
-			fmt.Printf("Problem #%d: %s = ", i+1, problem.q)
-
-			scanner.Scan()
-			userAnswer := strings.TrimSpace(scanner.Text())
-
+		case userAnswer := <-answerCh:
 			if userAnswer == problem.a {
 				correct++
 			}
